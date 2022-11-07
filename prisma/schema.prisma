@@ -1,0 +1,163 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+generator erd {
+    provider = "prisma-erd-generator"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URI")
+}
+
+model City {
+    id      String    @id @unique @db.Uuid
+    name    String
+    zipcode Int
+    Address Address[]
+}
+
+model Address {
+    address    String       @unique
+    zipcode    String
+    longitude  Float
+    latitude   Float
+    hasCity    City         @relation(fields: [cityId], references: [id])
+    Customer   Customer[]
+    Restaurant Restaurant[]
+    cityId     String       @db.Uuid
+    Employee   Employee[]
+    Order      Order[]
+
+    @@id([address])
+}
+
+model LoginInfo {
+    id         String       @id @unique @db.Uuid
+    username   String
+    password   String
+    salt       String
+    hasRole    Roles
+    Customer   Customer?
+    Restaurant Restaurant[]
+    Employee   Employee[]
+}
+
+model Customer {
+    id             String    @id @unique @db.Uuid
+    firstname      String
+    lastname       String
+    phone          Int
+    email          String
+    birtdate       DateTime
+    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
+    addressAddress String
+    addressZipcode String
+    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
+    loginInfoId    String    @unique @db.Uuid
+    cityId         String    @db.Uuid
+    Order          Order[]
+}
+
+model Restaurant {
+    id             String    @id @unique @db.Uuid
+    name           String
+    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
+    addressAddress String
+    addressZipcode String
+    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
+    loginInfoId    String    @db.Uuid
+    cityId         String    @db.Uuid
+    Menu           Menu?
+    Order          Order[]
+}
+
+model Menu {
+    id            String      @id @unique @db.Uuid
+    title         String
+    MenuItems     MenuItems[]
+    hasRestaurant Restaurant  @relation(fields: [restaurantId], references: [id])
+    restaurantId  String      @unique @db.Uuid
+}
+
+enum Type {
+    PIZZA
+    PASTARETTTER
+    TILBEHOER
+}
+
+model MenuItems {
+    id          String      @id @unique @db.Uuid
+    name        String
+    description String
+    price       String
+    type        Type
+    hasMenu     Menu        @relation(fields: [menuId], references: [id])
+    menuId      String      @db.Uuid
+    OrderItem   OrderItem[]
+}
+
+enum Status {
+    STARTED
+    MADE
+    DELIVERING
+    DELEVERED
+}
+
+model Order {
+    id             String      @id @unique @db.Uuid
+    status         Status
+    statusDetails  String
+    hasOrderItems  OrderItem[]
+    hasRestaurant  Restaurant  @relation(fields: [restaurantId], references: [id])
+    restaurantId   String      @db.Uuid
+    hasCustomer    Customer    @relation(fields: [customerId], references: [id])
+    customerId     String      @db.Uuid
+    hasEmployee    Employee    @relation(fields: [employeeId], references: [id])
+    employeeId     String      @db.Uuid
+    hasAddress     Address     @relation(fields: [addressAddress], references: [address])
+    addressAddress String
+}
+
+model OrderItem {
+    id          String    @id @unique @db.Uuid
+    menuItem    MenuItems @relation(fields: [menuItemsId], references: [id])
+    menuItemsId String    @db.Uuid
+    preference  String
+    price       Float
+    quantity    Int
+    Order       Order?    @relation(fields: [orderId], references: [id])
+    orderId     String?   @db.Uuid
+}
+
+model Employee {
+    id             String    @id @unique @db.Uuid
+    firstname      String
+    lastname       String
+    email          String
+    active         Boolean
+    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
+    loginInfoId    String    @db.Uuid
+    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
+    addressAddress String
+    Order          Order[]
+}
+
+model OrderLog {
+    id        String   @id @unique @db.Uuid
+    timeStamp DateTime
+    status    Status
+}
+
+model Company {
+    id      String @id @unique @db.Uuid
+    balance Float
+}
+
+enum Roles {
+    ADMIN
+    CUSTOMER
+    RESTAURANT
+    EMPLOYEE
+}
