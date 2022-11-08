@@ -11,66 +11,80 @@ datasource db {
     url      = env("DATABASE_URI")
 }
 
-model City {
-    id      String    @id @unique @db.Uuid
-    name    String
-    zipcode Int
-    Address Address[]
+enum BonusType {
+    LATE
+    EARLY
+    REVIEWS
+}
+
+model Bonus {
+    id        String    @id @unique @db.Uuid
+    bonustype BonusType
+    factor    Float
+}
+
+enum PayCheckType {
+    TOEMPLOYEE
+    TORESTAURANT
+}
+
+model Payment {
+    id     String       @id @db.Uuid
+    from   String       @db.Uuid
+    to     String       @db.Uuid
+    amount Float
+    type   PayCheckType
+}
+
+model Receipt {
+    id         String   @id @unique @db.Uuid
+    customerId String
+    order      Order    @relation(fields: [orderId], references: [id])
+    amount     Float
+    time       DateTime
+    orderId    String   @unique @db.Uuid
 }
 
 model Address {
-    address    String       @unique
-    zipcode    String
-    longitude  Float
-    latitude   Float
-    hasCity    City         @relation(fields: [cityId], references: [id])
-    Customer   Customer[]
-    Restaurant Restaurant[]
-    cityId     String       @db.Uuid
-    Employee   Employee[]
-    Order      Order[]
+    id        String @unique @db.Uuid
+    street    String
+    streetNr  String
+    zipcode   String
+    longitude Float
+    latitude  Float
+    cityId    String @db.Uuid
 
-    @@id([address])
+    @@id([id])
 }
 
 model LoginInfo {
-    id         String       @id @unique @db.Uuid
-    username   String
-    password   String
-    salt       String
-    hasRole    Roles
-    Customer   Customer?
-    Restaurant Restaurant[]
-    Employee   Employee[]
+    id       String @id @unique @db.Uuid
+    username String
+    password Bytes
+    email    String
+    hasRole  Roles
 }
 
 model Customer {
-    id             String    @id @unique @db.Uuid
-    firstname      String
-    lastname       String
-    phone          Int
-    email          String
-    birtdate       DateTime
-    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
-    addressAddress String
-    addressZipcode String
-    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
-    loginInfoId    String    @unique @db.Uuid
-    cityId         String    @db.Uuid
-    Order          Order[]
+    id          String   @id @unique @db.Uuid
+    firstname   String
+    lastname    String
+    phone       Int
+    birtdate    DateTime
+    address     String
+    loginInfoId String
 }
 
 model Restaurant {
-    id             String    @id @unique @db.Uuid
-    name           String
-    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
-    addressAddress String
-    addressZipcode String
-    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
-    loginInfoId    String    @db.Uuid
-    cityId         String    @db.Uuid
-    Menu           Menu?
-    Order          Order[]
+    id          String @id @unique @db.Uuid
+    name        String
+    adress      String
+    loginInfoId String
+    cityId      String
+    Menu        Menu?
+    kontoNr     Int
+    regNr       Int
+    CVR         Int    @unique
 }
 
 model Menu {
@@ -88,14 +102,13 @@ enum Type {
 }
 
 model MenuItems {
-    id          String      @id @unique @db.Uuid
+    id          String @id @unique @db.Uuid
     name        String
     description String
     price       String
     type        Type
-    hasMenu     Menu        @relation(fields: [menuId], references: [id])
-    menuId      String      @db.Uuid
-    OrderItem   OrderItem[]
+    hasMenu     Menu   @relation(fields: [menuId], references: [id])
+    menuId      String @db.Uuid
 }
 
 enum Status {
@@ -107,52 +120,39 @@ enum Status {
 
 model Order {
     id             String      @id @unique @db.Uuid
-    status         Status
+    orderStatus    OrdreStatus @relation(fields: [ordreStatusId], references: [id])
     statusDetails  String
     hasOrderItems  OrderItem[]
-    hasRestaurant  Restaurant  @relation(fields: [restaurantId], references: [id])
-    restaurantId   String      @db.Uuid
-    hasCustomer    Customer    @relation(fields: [customerId], references: [id])
-    customerId     String      @db.Uuid
-    hasEmployee    Employee    @relation(fields: [employeeId], references: [id])
-    employeeId     String      @db.Uuid
-    hasAddress     Address     @relation(fields: [addressAddress], references: [address])
     addressAddress String
+    Receipt        Receipt?
+    ordreStatusId  String      @db.Uuid
 }
 
 model OrderItem {
-    id          String    @id @unique @db.Uuid
-    menuItem    MenuItems @relation(fields: [menuItemsId], references: [id])
-    menuItemsId String    @db.Uuid
-    preference  String
-    price       Float
-    quantity    Int
-    Order       Order?    @relation(fields: [orderId], references: [id])
-    orderId     String?   @db.Uuid
+    id         String  @id @unique @db.Uuid
+    preference String
+    price      Float
+    quantity   Int
+    Order      Order?  @relation(fields: [orderId], references: [id])
+    orderId    String? @db.Uuid
 }
 
 model Employee {
-    id             String    @id @unique @db.Uuid
-    firstname      String
-    lastname       String
-    email          String
-    active         Boolean
-    hasLogin       LoginInfo @relation(fields: [loginInfoId], references: [id])
-    loginInfoId    String    @db.Uuid
-    hasAddress     Address   @relation(fields: [addressAddress], references: [address])
-    addressAddress String
-    Order          Order[]
+    id          String  @id @unique @db.Uuid
+    firstname   String
+    lastname    String
+    active      Boolean
+    loginInfoId String  @db.Uuid
+    address     String
+    kontoNr     Int
+    regNr       Int
 }
 
-model OrderLog {
+model OrdreStatus {
     id        String   @id @unique @db.Uuid
     timeStamp DateTime
     status    Status
-}
-
-model Company {
-    id      String @id @unique @db.Uuid
-    balance Float
+    Order     Order[]
 }
 
 enum Roles {
@@ -160,4 +160,11 @@ enum Roles {
     CUSTOMER
     RESTAURANT
     EMPLOYEE
+}
+
+model Company {
+    id      String @id @unique @db.Uuid
+    name    String
+    kontoNr Int
+    regNr   Int
 }
