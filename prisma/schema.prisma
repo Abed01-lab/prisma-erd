@@ -46,23 +46,21 @@ model Receipt {
 }
 
 model Address {
-    id        String @unique @db.Uuid
+    id        String @id @unique @db.Uuid
     street    String
     streetNr  String
     zipcode   String
     longitude Float
     latitude  Float
     cityId    String @db.Uuid
-
-    @@id([id])
 }
 
 model LoginInfo {
-    id       String @id @unique @db.Uuid
-    username String
-    password Bytes
-    email    String
-    hasRole  Roles
+    id           String @id @unique @db.Uuid
+    username     String
+    passwordHash Bytes
+    salt         Bytes
+    email        String
 }
 
 model Customer {
@@ -73,6 +71,7 @@ model Customer {
     birtdate    DateTime
     address     String
     loginInfoId String
+    role        String   @default("Customer")
 }
 
 model Restaurant {
@@ -85,6 +84,7 @@ model Restaurant {
     kontoNr     Int
     regNr       Int
     CVR         Int    @unique
+    role        String @default("Restaurant")
 }
 
 model Menu {
@@ -146,6 +146,7 @@ model Employee {
     address     String
     kontoNr     Int
     regNr       Int
+    role        String  @default("Employee")
 }
 
 model OrdreStatus {
@@ -155,16 +156,10 @@ model OrdreStatus {
     Order     Order[]
 }
 
-enum Roles {
-    ADMIN
-    CUSTOMER
-    RESTAURANT
-    EMPLOYEE
-}
-
 model Company {
-    id      String @id @unique @db.Uuid
-    name    String
-    kontoNr Int
-    regNr   Int
+    id        String @id @unique @db.Uuid
+    name      String
+    kontoNr   Int
+    regNr     Int
+    loginInfo String
 }
