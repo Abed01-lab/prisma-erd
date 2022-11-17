@@ -3,7 +3,8 @@ generator client {
 }
 
 generator erd {
-    provider = "prisma-erd-generator"
+    provider                  = "prisma-erd-generator"
+    includeRelationFromFields = true
 }
 
 datasource db {
@@ -36,45 +37,6 @@ model Payment {
     type   PayCheckType
 }
 
-model Receipt {
-    id         String   @id @unique @db.Uuid
-    customerId String
-    order      Order    @relation(fields: [orderId], references: [id])
-    amount     Float
-    time       DateTime
-    orderId    String   @unique @db.Uuid
-}
-
-model Address {
-    id        String @unique @db.Uuid
-    street    String
-    streetNr  String
-    zipcode   String
-    longitude Float
-    latitude  Float
-    cityId    String @db.Uuid
-
-    @@id([id])
-}
-
-model LoginInfo {
-    id       String @id @unique @db.Uuid
-    username String
-    password Bytes
-    email    String
-    hasRole  Roles
-}
-
-model Customer {
-    id          String   @id @unique @db.Uuid
-    firstname   String
-    lastname    String
-    phone       Int
-    birtdate    DateTime
-    address     String
-    loginInfoId String
-}
-
 model Restaurant {
     id          String @id @unique @db.Uuid
     name        String
@@ -85,6 +47,7 @@ model Restaurant {
     kontoNr     Int
     regNr       Int
     CVR         Int    @unique
+    role        String @default("Restaurant")
 }
 
 model Menu {
@@ -118,23 +81,40 @@ enum Status {
     DELEVERED
 }
 
+model Receipt {
+    id      String   @id @unique @db.Uuid
+    order   Order    @relation(fields: [orderId], references: [id])
+    amount  Float
+    time    DateTime
+    orderId String   @unique @db.Uuid
+}
+
 model Order {
     id             String      @id @unique @db.Uuid
-    orderStatus    OrdreStatus @relation(fields: [ordreStatusId], references: [id])
-    statusDetails  String
+    customerId     String
+    employeeId     String
+    restaurantId   String
     hasOrderItems  OrderItem[]
     addressAddress String
     Receipt        Receipt?
-    ordreStatusId  String      @db.Uuid
+    orderStatus    OrdreStatus @relation(fields: [ordreStatusId], references: [id])
+    ordreStatusId  String      @unique @db.Uuid
 }
 
 model OrderItem {
-    id         String  @id @unique @db.Uuid
+    id         String @id @unique @db.Uuid
     preference String
     price      Float
     quantity   Int
-    Order      Order?  @relation(fields: [orderId], references: [id])
-    orderId    String? @db.Uuid
+    Order      Order  @relation(fields: [orderId], references: [id])
+    orderId    String @db.Uuid
+}
+
+model OrdreStatus {
+    id        String   @id @unique @db.Uuid
+    timeStamp DateTime
+    status    Status
+    Order     Order?
 }
 
 model Employee {
@@ -144,27 +124,45 @@ model Employee {
     active      Boolean
     loginInfoId String  @db.Uuid
     address     String
+    role        String  @default("Employee")
     kontoNr     Int
     regNr       Int
 }
 
-model OrdreStatus {
-    id        String   @id @unique @db.Uuid
-    timeStamp DateTime
-    status    Status
-    Order     Order[]
-}
-
-enum Roles {
-    ADMIN
-    CUSTOMER
-    RESTAURANT
-    EMPLOYEE
-}
-
 model Company {
-    id      String @id @unique @db.Uuid
-    name    String
-    kontoNr Int
-    regNr   Int
+    id          String @id @unique @db.Uuid
+    name        String
+    role        String @default("Admin")
+    loginInfoId String
+    kontoNr     Int
+    regNr       Int
+}
+
+model Customer {
+    id          String   @id @unique @db.Uuid
+    firstname   String
+    lastname    String
+    phone       Int
+    birtdate    DateTime
+    address     String
+    loginInfoId String
+    role        String   @default("Customer")
+}
+
+model LoginInfo {
+    id           String @id @unique @db.Uuid
+    username     String
+    passwordHash Bytes
+    salt         Bytes
+    email        String
+}
+
+model Address {
+    id        String @id @unique @db.Uuid
+    street    String
+    streetNr  String
+    zipcode   String
+    longitude Float
+    latitude  Float
+    cityId    String @db.Uuid
 }
